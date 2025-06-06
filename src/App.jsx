@@ -6,39 +6,76 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import TaskForm from './components/TaskForm';
 import TaskDetail from './components/TaskDetail';
+import CoupleForm from './components/CoupleForm';
 import Notification from './components/Notification';
-import { getStoredTasks, storeUser, getStoredUser } from './utils/storage';
+import { userApi, coupleApi, taskApi } from './utils/api';
 
 function App() {
   const [user, setUser] = useState(null);
   const [partner, setPartner] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
-    // Check if user is already logged in
-    const storedUser = getStoredUser();
-    if (storedUser) {
-      setUser(storedUser.user);
-      setPartner(storedUser.partner);
-    }
+    // 检查用户是否已登录
+    const checkAuth = async () => {
+      try {
+        // 尝试获取当前用户信息
+        const userData = await userApi.getCurrentUser();
+        setUser(userData);
+        
+        try {
+          // 尝试获取伴侣信息
+          const partnerData = await coupleApi.getPartner();
+          setPartner(partnerData);
+          
+          // 获取任务列表
+          const tasksData = await taskApi.getTasks();
+          setTasks(tasksData);
+        } catch (error) {
+          // 没有伴侣关系，或获取任务失败
+          console.error("获取伴侣或任务失败:", error);
+        }
+      } catch (error) {
+        // 未登录或令牌无效
+        console.error("身份验证失败:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    // Load tasks from local storage
-    const storedTasks = getStoredTasks();
-    if (storedTasks) {
-      setTasks(storedTasks);
-    }
+    checkAuth();
   }, []);
   
   const handleLogin = (userData, partnerData) => {
     setUser(userData);
     setPartner(partnerData);
-    storeUser(userData, partnerData);
+    
+    // 如果有伴侣关系，获取任务列表
+    if (partnerData) {
+      taskApi.getTasks()
+        .then(tasksData => setTasks(tasksData))
+        .catch(error => console.error("获取任务失败:", error));
+    }
   };
+  
+  const handleLogout = () => {
+    userApi.logout();
+    setUser(null);
+    setPartner(null);
+    setTasks([]);
+  };
+  
+  if (loading) {
+    return <div className="loading">加载中...</div>;
+  }
   
   return (
     <div className="app-container">
-      <Header user={user} partner={partner} />
+      <Header user={user} partner={partner} onLogout={handleLogout} />
       <main className="main-content">
+        {error && <div className="error-message">{error}</div>}
         {user && <Notification tasks={tasks} user={user} partner={partner} />}
         <Routes>
           <Route 
@@ -51,11 +88,15 @@ function App() {
           />
           <Route 
             path="/add-task" 
-            element={user ? <TaskForm user={user} partner={partner} tasks={tasks} setTasks={setTasks} /> : <Navigate to="/" />} 
+            element={user ? <TaskForm user={user} partner={partner} setTasks={setTasks} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/task/:id" 
-            element={user ? <TaskDetail user={user} partner={partner} tasks={tasks} setTasks={setTasks} /> : <Navigate to="/" />} 
+            element={user ? <TaskDetail user={user} partner={partner} setTasks={setTasks} /> : <Navigate to="/" />} 
+          />
+          <Route 
+            path="/create-couple" 
+            element={user ? <CoupleForm user={user} setPartner={setPartner} /> : <Navigate to="/" />} 
           />
         </Routes>
       </main>

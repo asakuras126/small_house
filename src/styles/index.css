@@ -56,6 +56,13 @@ body {
   display: none;
 }
 
+.user-id {
+  display: none;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0.25rem;
+}
+
 .menu-toggle {
   background: none;
   border: none;
@@ -94,6 +101,10 @@ body {
   }
   
   .user-names {
+    display: block;
+  }
+  
+  .user-id {
     display: block;
   }
   
@@ -148,6 +159,13 @@ body {
 
 .form-group {
   margin-bottom: 1rem;
+}
+
+.form-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: #666;
 }
 
 .form-group label {

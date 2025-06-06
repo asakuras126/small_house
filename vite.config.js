@@ -16,6 +16,13 @@ export default defineConfig({
     allowedHosts: [
       'work-1-ywbhbikoyjcaxyrh.prod-runtime.all-hands.dev',
       'work-2-ywbhbikoyjcaxyrh.prod-runtime.all-hands.dev'
-    ]
+    ],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:12001',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   }
 });

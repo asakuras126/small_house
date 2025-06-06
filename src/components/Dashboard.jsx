@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDate, formatTime, getRelativeDateDescription, groupTasksByDate, filterTasksByPeriod } from '../utils/dateUtils';
-import { deleteTask, storeTasks } from '../utils/storage';
+import { taskApi } from '../utils/api';
 import Calendar from './Calendar';
 import { format, parseISO, isSameDay } from 'date-fns';
 
@@ -11,45 +11,95 @@ function Dashboard({ user, partner, tasks, setTasks }) {
   const [groupedTasks, setGroupedTasks] = useState({});
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   
-  useEffect(() => {
-    // Apply filter
-    const filtered = filterTasksByPeriod(tasks, filter);
-    setFilteredTasks(filtered);
-    
-    // Group by date
-    const grouped = groupTasksByDate(filtered);
-    setGroupedTasks(grouped);
-  }, [tasks, filter]);
-  
-  const handleDeleteTask = (taskId) => {
-    if (window.confirm('确定要删除这个任务吗？')) {
-      const updatedTasks = deleteTask(taskId);
-      setTasks(updatedTasks);
+  // 加载任务
+  const loadTasks = async (period = filter) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const tasksData = await taskApi.getTasks(period);
+      setTasks(tasksData);
+    } catch (error) {
+      setError('加载任务失败: ' + error.message);
+      console.error('加载任务失败:', error);
+    } finally {
+      setLoading(false);
     }
   };
   
-  const handleCompleteTask = (taskId) => {
-    const updatedTasks = tasks.map(task => 
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    );
-    setTasks(updatedTasks);
-    storeTasks(updatedTasks);
+  useEffect(() => {
+    // 当过滤器改变时，从API加载任务
+    loadTasks(filter);
+  }, [filter]);
+  
+  useEffect(() => {
+    // 当任务列表改变时，应用过滤和分组
+    // 注意：由于我们现在直接从API获取已过滤的任务，这个逻辑可能需要调整
+    setFilteredTasks(tasks);
+    
+    // 分组任务
+    const grouped = groupTasksByDate(tasks);
+    setGroupedTasks(grouped);
+  }, [tasks]);
+  
+  const handleDeleteTask = async (taskId) => {
+    if (window.confirm('确定要删除这个任务吗？')) {
+      try {
+        setLoading(true);
+        await taskApi.deleteTask(taskId);
+        // 重新加载任务列表
+        await loadTasks();
+      } catch (error) {
+        setError('删除任务失败: ' + error.message);
+        console.error('删除任务失败:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
   };
   
-  const handleSelectDate = (date) => {
+  const handleCompleteTask = async (taskId, currentStatus) => {
+    try {
+      setLoading(true);
+      await taskApi.updateTask(taskId, { completed: !currentStatus });
+      // 重新加载任务列表
+      await loadTasks();
+    } catch (error) {
+      setError('更新任务状态失败: ' + error.message);
+      console.error('更新任务状态失败:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleSelectDate = async (date) => {
     setSelectedDate(date);
-    setFilter('all'); // Reset filter when selecting a date
     
-    // Filter tasks for the selected date
-    const dateString = format(date, 'yyyy-MM-dd');
-    const tasksOnDate = tasks.filter(task => {
-      const taskDate = parseISO(task.date);
-      return isSameDay(taskDate, date);
-    });
-    
-    setFilteredTasks(tasksOnDate);
-    setGroupedTasks({ [dateString]: tasksOnDate });
+    try {
+      setLoading(true);
+      // 格式化日期为ISO字符串
+      const dateString = format(date, 'yyyy-MM-dd');
+      
+      // 从API获取特定日期的任务
+      // 注意：这里假设API支持按日期过滤，实际实现可能需要调整
+      const tasksData = await taskApi.getTasks('all');
+      
+      // 手动过滤出选定日期的任务
+      const tasksOnDate = tasksData.filter(task => {
+        const taskDate = new Date(task.date);
+        return isSameDay(taskDate, date);
+      });
+      
+      setFilteredTasks(tasksOnDate);
+      setGroupedTasks({ [dateString]: tasksOnDate });
+    } catch (error) {
+      setError('加载任务失败: ' + error.message);
+      console.error('加载任务失败:', error);
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
@@ -77,6 +127,18 @@ function Dashboard({ user, partner, tasks, setTasks }) {
         </div>
       </div>
       
+      {loading && <div className="loading-indicator">加载中...</div>}
+      {error && <div className="error-message">{error}</div>}
+      
+      {!partner && !loading && (
+        <div className="empty-state">
+          <p>您还没有创建情侣关系，请先创建情侣关系</p>
+          <Link to="/create-couple" className="btn">
+            创建情侣关系
+          </Link>
+        </div>
+      )}
+      
       {viewMode === 'calendar' ? (
         <div className="calendar-view">
           <Calendar tasks={tasks} onSelectDate={handleSelectDate} />
@@ -103,7 +165,8 @@ function Dashboard({ user, partner, tasks, setTasks }) {
                     <input 
                       type="checkbox" 
                       checked={task.completed || false}
-                      onChange={() => handleCompleteTask(task.id)}
+                      onChange={() => handleCompleteTask(task.id, task.completed)}
+                      disabled={loading}
                     />
                   </div>
                   <div className="task-content">
@@ -113,9 +176,9 @@ function Dashboard({ user, partner, tasks, setTasks }) {
                     <div className="task-meta">
                       <span className="task-time">{formatTime(task.date)}</span>
                       <span className="task-assignee">
-                        {task.assignee === user.id ? user.name : 
-                         task.assignee === partner.id ? partner.name : 
-                         `${user.name} & ${partner.name}`}
+                        {task.assignee === user.id ? user.username : 
+                         partner && task.assignee === partner.id ? partner.username : 
+                         "双方"}
                       </span>
                     </div>
                   </div>
@@ -126,6 +189,7 @@ function Dashboard({ user, partner, tasks, setTasks }) {
                     <button 
                       className="icon-btn delete"
                       onClick={() => handleDeleteTask(task.id)}
+                      disabled={loading}
                     >
                       <span className="material-symbols-outlined">delete</span>
                     </button>
@@ -194,7 +258,8 @@ function Dashboard({ user, partner, tasks, setTasks }) {
                           <input 
                             type="checkbox" 
                             checked={task.completed || false}
-                            onChange={() => handleCompleteTask(task.id)}
+                            onChange={() => handleCompleteTask(task.id, task.completed)}
+                            disabled={loading}
                           />
                         </div>
                         <div className="task-content">
@@ -204,9 +269,9 @@ function Dashboard({ user, partner, tasks, setTasks }) {
                           <div className="task-meta">
                             <span className="task-time">{formatTime(task.date)}</span>
                             <span className="task-assignee">
-                              {task.assignee === user.id ? user.name : 
-                               task.assignee === partner.id ? partner.name : 
-                               `${user.name} & ${partner.name}`}
+                              {task.assignee === user.id ? user.username : 
+                               partner && task.assignee === partner.id ? partner.username : 
+                               "双方"}
                             </span>
                           </div>
                         </div>
@@ -217,6 +282,7 @@ function Dashboard({ user, partner, tasks, setTasks }) {
                           <button 
                             className="icon-btn delete"
                             onClick={() => handleDeleteTask(task.id)}
+                            disabled={loading}
                           >
                             <span className="material-symbols-outlined">delete</span>
                           </button>

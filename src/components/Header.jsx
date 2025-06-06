@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { clearStoredUser } from '../utils/storage';
 
-function Header({ user, partner }) {
+function Header({ user, partner, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   
   const handleLogout = () => {
-    clearStoredUser();
+    if (onLogout) {
+      onLogout();
+    }
     navigate('/');
-    window.location.reload(); // Force reload to clear state
   };
   
   const toggleMenu = () => {
@@ -27,7 +27,12 @@ function Header({ user, partner }) {
         <h1>情侣日程小程序</h1>
         {user && (
           <div className="user-info">
-            <span className="user-names">{user.name} & {partner.name}</span>
+            <span className="user-names">
+              {user.display_name || user.username} {partner && `& ${partner.display_name || partner.username}`}
+            </span>
+            <span className="user-id">
+              {user.username}
+            </span>
             <button onClick={handleLogout} className="btn btn-small">
               退出
             </button>
