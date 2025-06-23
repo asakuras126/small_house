@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func
 from app.models import User, Task, TaskCreate, TaskUpdate
-from app.auth import get_current_user
 from app.database import get_db, Task as DBTask, Couple as DBCouple
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -30,12 +29,12 @@ def get_couple_id(db: Session, user_id: str):
 @router.post("/", response_model=Task)
 def create_task(
     task_data: TaskCreate,
-    current_user: User = Depends(get_current_user),
+    user_id: str,
     db: Session = Depends(get_db)
 ):
     """创建新任务"""
     # 验证情侣关系
-    couple_id = get_couple_id(db, current_user.id)
+    couple_id = get_couple_id(db, user_id)
     
     # 验证任务所属的情侣关系是否与当前用户匹配
     if task_data.couple_id != couple_id:
@@ -56,7 +55,7 @@ def create_task(
         assignee=task_data.assignee,
         priority=task_data.priority,
         couple_id=task_data.couple_id,
-        created_by=current_user.id,
+        created_by=user_id,
         created_at=now,
         updated_at=now,
         completed=False
@@ -84,14 +83,14 @@ def create_task(
 
 @router.get("/", response_model=List[Task])
 def get_tasks(
+    user_id: str,
     period: Optional[str] = Query(None, description="过滤时间段: today, tomorrow, week, future, all"),
     completed: Optional[bool] = Query(None, description="过滤完成状态"),
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """获取任务列表"""
     # 获取情侣关系ID
-    couple_id = get_couple_id(db, current_user.id)
+    couple_id = get_couple_id(db, user_id)
     
     # 构建查询条件
     query = db.query(DBTask).filter(DBTask.couple_id == couple_id)
@@ -117,10 +116,11 @@ def get_tasks(
     elif period == "future":
         query = query.filter(DBTask.date >= week_end)
     elif period == "all":
-        query = query.filter(DBTask.date >= today_start)
+        # 在"全部"选项卡中显示所有任务，包括过去的任务
+        pass
     else:
-        # 默认显示今天及以后的任务
-        query = query.filter(DBTask.date >= today_start)
+        # 默认显示所有任务
+        pass
     
     # 查询任务并按日期排序
     tasks = query.order_by(DBTask.date).all()
@@ -144,12 +144,12 @@ def get_tasks(
 @router.get("/{task_id}", response_model=Task)
 def get_task(
     task_id: str,
-    current_user: User = Depends(get_current_user),
+    user_id: str,
     db: Session = Depends(get_db)
 ):
     """获取单个任务详情"""
     # 获取情侣关系ID
-    couple_id = get_couple_id(db, current_user.id)
+    couple_id = get_couple_id(db, user_id)
     
     # 查询任务
     task = db.query(DBTask).filter(
@@ -180,12 +180,12 @@ def get_task(
 def update_task(
     task_id: str,
     task_update: TaskUpdate,
-    current_user: User = Depends(get_current_user),
+    user_id: str,
     db: Session = Depends(get_db)
 ):
     """更新任务"""
     # 获取情侣关系ID
-    couple_id = get_couple_id(db, current_user.id)
+    couple_id = get_couple_id(db, user_id)
     
     # 查询任务
     task = db.query(DBTask).filter(
@@ -242,12 +242,12 @@ def update_task(
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_task(
     task_id: str,
-    current_user: User = Depends(get_current_user),
+    user_id: str,
     db: Session = Depends(get_db)
 ):
     """删除任务"""
     # 获取情侣关系ID
-    couple_id = get_couple_id(db, current_user.id)
+    couple_id = get_couple_id(db, user_id)
     
     # 查询任务
     task = db.query(DBTask).filter(

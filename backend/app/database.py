@@ -31,7 +31,6 @@ class User(Base):
     
     id = Column(String, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
@@ -67,6 +66,7 @@ class Task(Base):
 
 # 数据库依赖
 def get_db():
+    print("get_db 被调用", flush=True)
     db = SessionLocal()
     try:
         yield db

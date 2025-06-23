@@ -1,0 +1,10 @@
+<view class="container">
+  <view class="card">
+    <view class="title text-center">创建情侣关系</view>
+    <form bindsubmit="onCreateCouple">
+      <input class="input" name="partnerUsername" placeholder="请输入伴侣用户名" />
+      <view class="error-message">{{errorMsg}}</view>
+      <button class="btn" formType="submit" loading="{{loading}}">创建情侣关系</button>
+    </form>
+  </view>
+</view> 

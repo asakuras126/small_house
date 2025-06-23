@@ -1,14 +1,18 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import users, tasks, couples
 from app.database import init_db, get_db
 from sqlalchemy.orm import Session
+import logging
 
 app = FastAPI(
     title="情侣日程小程序 API",
     description="情侣双人日程小程序的后端API",
     version="1.0.0"
 )
+
+# 日志配置
+logging.basicConfig(level=logging.INFO)
 
 # 配置CORS
 origins = [
@@ -26,6 +30,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# @app.middleware("http")
+# async def log_request(request: Request, call_next):
+#     body = await request.body()
+#     logging.info(f"收到请求: {request.method} {request.url}")
+#     logging.info(f"请求头: {dict(request.headers)}")
+#     logging.info(f"请求体: {body.decode('utf-8', errors='ignore')}")
+#     response = await call_next(request)
+#     return response
 
 # 初始化数据库
 @app.on_event("startup")

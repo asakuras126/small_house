@@ -1,0 +1,80 @@
+<view class="container">
+  <view class="header-section">
+    <view class="form-title">{{isEdit ? '编辑任务' : '创建新任务'}}</view>
+    <view class="form-subtitle">{{isEdit ? '修改任务信息' : '添加一个新的任务'}}</view>
+  </view>
+
+  <view class="form-card">
+    <form bindsubmit="onCreateTask">
+      <view class="input-group">
+        <view class="input-label">
+          <text class="label-icon">✏️</text>
+          <text>任务标题</text>
+        </view>
+        <input class="modern-input" placeholder="请输入任务标题" value="{{title}}" bindinput="onInputChange" data-field="title" />
+      </view>
+
+      <view class="input-group">
+        <view class="input-label">
+          <text class="label-icon">📝</text>
+          <text>任务描述</text>
+        </view>
+        <input class="modern-input" placeholder="请输入任务描述（可选）" value="{{description}}" bindinput="onInputChange" data-field="description" />
+      </view>
+
+      <view class="picker-group">
+        <view class="input-label">
+          <text class="label-icon">📅</text>
+          <text>日期</text>
+        </view>
+        <picker mode="date" value="{{date}}" bindchange="onDateChange">
+          <view class="picker-input">{{date || '请选择日期'}}</view>
+        </picker>
+      </view>
+
+      <view class="picker-group">
+        <view class="input-label">
+          <text class="label-icon">⏰</text>
+          <text>时间</text>
+        </view>
+        <picker mode="time" value="{{time}}" bindchange="onTimeChange">
+          <view class="picker-input">{{time || '请选择时间'}}</view>
+        </picker>
+      </view>
+
+      <view class="picker-group">
+        <view class="input-label">
+          <text class="label-icon">👤</text>
+          <text>负责人</text>
+        </view>
+        <picker value="{{assigneeIndex}}" range="{{assigneeOptions}}" bindchange="onAssigneeChange">
+          <view class="picker-input">{{assigneeOptions[assigneeIndex]}}</view>
+        </picker>
+      </view>
+
+      <view class="picker-group">
+        <view class="input-label">
+          <text class="label-icon">⚡</text>
+          <text>优先级</text>
+        </view>
+        <picker value="{{priorityIndex}}" range="{{priorityOptions}}" bindchange="onPriorityChange">
+          <view class="picker-input priority-{{priorityOptions[priorityIndex] === '高' ? 'high' : priorityOptions[priorityIndex] === '中' ? 'medium' : 'low'}}">{{priorityOptions[priorityIndex]}}</view>
+        </picker>
+      </view>
+
+      <view class="switch-group">
+        <view class="input-label">
+          <text class="label-icon">✅</text>
+          <text>完成状态</text>
+        </view>
+        <switch checked="{{completed}}" bindchange="onCompletionChange" color="#667eea"/>
+      </view>
+
+      <view class="error-message">{{errorMsg}}</view>
+      
+      <button class="submit-btn" formType="submit" loading="{{loading}}">
+        {{isEdit ? '保存修改' : '创建任务'}}
+      </button>
+    </form>
+  </view>
+</view> 

@@ -6,23 +6,16 @@ from app.database import get_db, Couple as DBCouple, User as DBUser
 import datetime
 import uuid
 from sqlalchemy import or_
+from fastapi import Request
 
 router = APIRouter()
 
 @router.post("/", response_model=Couple)
 def create_couple(
     couple_data: CoupleCreate,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """创建情侣关系"""
-    # 验证当前用户是否是请求中的用户
-    if couple_data.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="只能为自己创建情侣关系"
-        )
-    
     # 检查伴侣是否存在
     partner = db.query(DBUser).filter(DBUser.id == couple_data.partner_id).first()
     
@@ -101,15 +94,12 @@ def create_couple(
     )
 
 @router.get("/", response_model=Couple)
-def get_couple(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
+def get_couple(user_id: str, db: Session = Depends(get_db)):
     """获取当前用户的情侣关系"""
     couple = db.query(DBCouple).filter(
         or_(
-            DBCouple.user_id == current_user.id,
-            DBCouple.partner_id == current_user.id
+            DBCouple.user_id == user_id,
+            DBCouple.partner_id == user_id
         )
     ).first()
     
@@ -128,15 +118,12 @@ def get_couple(
     )
 
 @router.get("/partner", response_model=User)
-def get_partner(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
+def get_partner(user_id: str, db: Session = Depends(get_db)):
     """获取当前用户的伴侣信息"""
     couple = db.query(DBCouple).filter(
         or_(
-            DBCouple.user_id == current_user.id,
-            DBCouple.partner_id == current_user.id
+            DBCouple.user_id == user_id,
+            DBCouple.partner_id == user_id
         )
     ).first()
     
@@ -147,7 +134,7 @@ def get_partner(
         )
     
     # 确定伴侣ID
-    partner_id = couple.partner_id if couple.user_id == current_user.id else couple.user_id
+    partner_id = couple.partner_id if couple.user_id == user_id else couple.user_id
     
     # 获取伴侣信息
     partner = db.query(DBUser).filter(DBUser.id == partner_id).first()
@@ -160,21 +147,17 @@ def get_partner(
     return User(
         id=partner.id,
         username=partner.username,
-        email=partner.email,
         created_at=partner.created_at,
         updated_at=partner.updated_at
     )
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
-def delete_couple(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
+def delete_couple(user_id: str, db: Session = Depends(get_db)):
     """删除情侣关系"""
     couple = db.query(DBCouple).filter(
         or_(
-            DBCouple.user_id == current_user.id,
-            DBCouple.partner_id == current_user.id
+            DBCouple.user_id == user_id,
+            DBCouple.partner_id == user_id
         )
     ).first()
     

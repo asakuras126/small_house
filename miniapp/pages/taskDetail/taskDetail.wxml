@@ -1,0 +1,53 @@
+<view class="container">
+  <view class="header-section">
+    <view class="task-status-badge {{task.completed ? 'completed' : 'pending'}}">
+      {{task.completed ? '已完成' : '进行中'}}
+    </view>
+    <view class="task-title">{{task.title}}</view>
+  </view>
+
+  <view class="details-card">
+    <view class="detail-row">
+      <view class="detail-icon">📝</view>
+      <view class="detail-content">
+        <view class="detail-label">描述</view>
+        <view class="detail-value">{{task.description}}</view>
+      </view>
+    </view>
+
+    <view class="detail-row">
+      <view class="detail-icon">📅</view>
+      <view class="detail-content">
+        <view class="detail-label">日期</view>
+        <view class="detail-value">{{task.date}}</view>
+      </view>
+    </view>
+
+    <view class="detail-row">
+      <view class="detail-icon">👤</view>
+      <view class="detail-content">
+        <view class="detail-label">负责人</view>
+        <view class="detail-value">{{task.assignee}}</view>
+      </view>
+    </view>
+
+    <view class="detail-row">
+      <view class="detail-icon">⚡</view>
+      <view class="detail-content">
+        <view class="detail-label">优先级</view>
+        <view class="detail-value priority-{{task.priority === '高' ? 'high' : task.priority === '中' ? 'medium' : 'low'}}">{{task.priority}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="action-section">
+    <view class="action-btn edit-btn" bindtap="onEdit">
+      <view class="action-icon edit-icon"></view>
+      <text class="action-text">编辑</text>
+    </view>
+    <view class="action-btn delete-btn" bindtap="onDelete">
+      <view class="action-icon delete-icon"></view>
+      <text class="action-text">删除</text>
+    </view>
+  </view>
+</view> 

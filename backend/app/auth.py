@@ -72,6 +72,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        print(token)
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
@@ -85,7 +86,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     return UserModel(
         id=user.id,
         username=user.username,
-        email=user.email,
         created_at=user.created_at,
         updated_at=user.updated_at
     )

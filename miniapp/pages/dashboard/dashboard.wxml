@@ -1,0 +1,7 @@
+<view class="container">
+  <view class="card text-center">
+    <view class="title">欢迎使用情侣日程小程序</view>
+    <button class="btn" bindtap="goToCouple">创建情侣关系</button>
+    <button class="btn btn-secondary" bindtap="goToTask">查看日程</button>
+  </view>
+</view> 

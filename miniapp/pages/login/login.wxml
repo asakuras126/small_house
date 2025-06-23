@@ -1,0 +1,46 @@
+<view class="container">
+  <view class="header-section">
+    <view class="app-title">情侣日程小程序</view>
+    <view class="app-subtitle">选择你的身份登录</view>
+  </view>
+
+  <view class="login-card">
+    <view class="user-options">
+      <view class="user-option" bindtap="quickLogin" data-type="yy">
+        <view class="user-emoji">🐑</view>
+        <view class="user-name">阳阳</view>
+        <view class="user-desc">阳阳</view>
+      </view>
+      
+      <view class="user-option" bindtap="quickLogin" data-type="ll">
+        <view class="user-emoji">🌰</view>
+        <view class="user-name">朸朸</view>
+        <view class="user-desc">朸朸</view>
+      </view>
+    </view>
+
+    <view class="divider">
+      <view class="divider-line"></view>
+      <view class="divider-text">或</view>
+      <view class="divider-line"></view>
+    </view>
+
+    <view class="manual-login" wx:if="{{showManualLogin}}">
+      <form bindsubmit="onLogin">
+        <input class="modern-input" name="username" placeholder="请输入用户名" />
+        <input class="modern-input" name="password" password placeholder="请输入密码" />
+        <view class="error-message">{{errorMsg}}</view>
+        <button class="submit-btn" formType="submit" loading="{{loading}}">登录</button>
+      </form>
+    </view>
+
+    <view class="toggle-manual" bindtap="toggleManualLogin">
+      {{showManualLogin ? '使用快速登录' : '使用账号密码'}}
+    </view>
+  </view>
+
+  <view class="loading-overlay" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <view class="loading-text">登录中...</view>
+  </view>
+</view> 

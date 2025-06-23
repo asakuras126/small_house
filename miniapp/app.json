@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "pages/task/task",
+    "pages/login/login",
+    "pages/couple/couple",
+    "pages/taskDetail/taskDetail",
+    "pages/taskForm/taskForm"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#ff6b9d",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "情侣日程小程序",
+    "backgroundColor": "#fecfef",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+} 

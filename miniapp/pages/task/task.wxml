@@ -1,0 +1,45 @@
+<view class="container">
+  <view class="tab-container">
+    <view class="tab {{filter === 'all' ? 'active' : ''}}" bindtap="onFilterChange" data-filter="all">全部</view>
+    <view class="tab {{filter === 'today' ? 'active' : ''}}" bindtap="onFilterChange" data-filter="today">今天</view>
+    <view class="tab {{filter === 'tomorrow' ? 'active' : ''}}" bindtap="onFilterChange" data-filter="tomorrow">明天</view>
+    <view class="tab {{filter === 'week' ? 'active' : ''}}" bindtap="onFilterChange" data-filter="week">本周</view>
+    <view class="tab {{filter === 'future' ? 'active' : ''}}" bindtap="onFilterChange" data-filter="future">未来</view>
+  </view>
+
+  <view class="task-list">
+    <block wx:if="{{loading}}">
+      <view class="loading">加载中...</view>
+    </block>
+    <block wx:elif="{{!loading && Object.keys(groupedTasks).length === 0}}">
+      <view class="empty-state">
+        <text>没有找到任务</text>
+        <navigator url="/pages/taskForm/taskForm" class="btn">添加新任务</navigator>
+      </view>
+    </block>
+    <block wx:else>
+      <block wx:for="{{groupedTasks}}" wx:for-index="date" wx:for-item="tasks" wx:key="date">
+        <view class="task-group">
+          <view class="date-header">{{dateHeaders[date]}}</view>
+          <view class="task-items">
+            <view class="task-item" wx:for="{{tasks}}" wx:for-item="task" wx:key="id" bindtap="goToDetail" data-id="{{task.id}}">
+              <view class="task-content">
+                <view class="task-title {{task.completed ? 'completed' : ''}}">{{task.title}}</view>
+                <view class="task-meta">
+                  <text class="task-time">{{task.time}}</text>
+                  <text class="task-assignee">{{task.assignee_name}}</text>
+                  <text class="task-status {{task.completed ? 'completed' : ''}}">{{task.completed ? '已完成' : '未完成'}}</text>
+                </view>
+              </view>
+              <view class="task-priority {{task.priority}}">{{task.priority_text}}</view>
+            </view>
+          </view>
+        </view>
+      </block>
+    </block>
+  </view>
+
+  <view class="fab" bindtap="goToAddTask">
+    <text class="fab-icon">+</text>
+  </view>
+</view> 
